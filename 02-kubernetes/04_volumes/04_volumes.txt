@@ -1,0 +1,224 @@
+volumes
+========
+* container contain its own directory.
+* if kubernetes restarts any container, all files will be lost.
+* Volume in kubernetes can be thought of shared directory for container in a pod at a pod level.
+* pod level mean life of pod dependant upon pod's life. If pod restarts all files will be lost.
+* Shared directory means all the containers of the pod can share & directory & file in it.
+
+Types
+------
+1. emptyDir
+2. configMap, secret, dowmwardApi
+3. presistantVolumeClaim
+4. gitRepo
+5. gcePersistentDisk
+6. awsElasticBookStore
+7. azureDisk
+
+
+==========================================================================
+
+>>> File: vol.yaml <<<
+-----------------------------------------------
+kind: Pod
+apiVersion: v1
+metadata: 
+  name: my-pod-with-vol
+spec:
+  volumes: 
+  - name: shared-dir
+    emptyDir: {}
+  containers: 
+  - name: container-one
+    image: aamirpinger/logfile_nodejs
+    ports: 
+    - containerPort: 8080
+    volumeMounts:
+    - name: shared-dir
+      mountPath: /data
+  - name: container-two
+    image: nginx
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: shared-dir
+      mountPath: /var/c-two
+
+-----------------------------------------------
+
+kubectl create -f vol.yaml
+
+kubectl get po
+
+kubectl get po -w
+
+>>>>>>>>>>>>>>>>>> container-one shell
+
+kubectl exec my-pod-with-vol -c container-one -it sh
+
+cd data
+
+echo "mHamzaHanif" > myname.txt
+
+cat myname.txt
+
+>>>>>>>>>>>>>>>>>> container-two shell
+
+kubectl exec my-pod-with-vol -c container-two -it sh
+
+cd ..
+
+cd var/c-two
+
+cat myname.txt
+
+==========================================================================
+
+Persistent Volume
+==================
+
+* Volume hold data at pod level this may cause of data loss i.e; rescheduling pod.
+* Thus we have persistent volume which is at cluster level.
+* Any pod can use that persistent volume by using volume claims.
+* This available outside of pod lifecycle.
+* This volume will be available to claim by another pod if required and the data is retained.
+
+
+Persistent Volume Claim
+========================
+
+* It is a formal request from user for claiming a persistent volume.
+* Based on requirement from user PVC finds any matching presistent volumes and claims it.
+* Depending upon config. options used for persistent vloume resource these PV resource can later be used/claim by other pods.
+
+
+Undestanding Persitent Volume Spec
+===================================
+
+See images.. undestand_persitent_volume-1,2,3,4
+
+
+>>> File: pv.yaml <<<
+----------------------------------------------
+
+kind: PersistentVolume
+apiVersion: v1
+metadata: 
+  name: pv
+spec: 
+  accessModes:
+  - ReadWriteOnce
+  capacity: 
+    storage: 100M
+  hostPath:
+    path: /tmp/pvexample
+  persistentVolumeReclaimPolicy: Delete
+
+----------------------------------------------
+
+kubectl create -f pv.yaml
+
+kubectl get pv
+
+
+>>> File: pvc.yaml <<<
+----------------------------------------------
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100M
+  storageClassName: ""
+
+----------------------------------------------
+
+kubectl create -f pvc.yaml
+
+kubectl get pv,pvc
+
+>>> File: pod.yaml <<<
+----------------------------------------------
+kind: Pod
+apiVersion: v1
+metadata:
+  name: pod-pv
+spec:
+  volumes:
+  - name: pv-vol
+    persistentVolumeClaim:
+      claimName: pvc
+  containers:
+  - name: container1
+    image: aamirpinger/logfile_nodejs
+    volumeMounts:
+    - name: pv-vol
+      mountPath: /data
+
+----------------------------------------------
+
+# Checking file remian after pvc deleted
+kubectl create -f pod.yaml
+
+kubectl get po,pv,pvc
+
+kubectl exec pod-pv -it sh
+
+----------------------------------------
+cd data
+echo "My name is Hamza"  > name.txt
+ls
+# name.txt
+cat name.txt
+# My name is Hamza
+exit
+
+----------------------------------------
+
+minikube ssh
+
+----------------------------------------
+$ cd /tmp/pvexample/
+$ ls 
+name.txt
+----------------------------------------
+
+kubectl get po,pv,pvc
+
+kubectl delete pvc pvc
+
+minikube ssh
+
+----------------------------------------
+$ cd /tmp/pvexample/
+$ ls 
+name.txt
+----------------------------------------
+==========================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+==========================================================================
+
+
+
+
+
+
+

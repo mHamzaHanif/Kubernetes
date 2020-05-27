@@ -1,0 +1,218 @@
+ReplicatSets, Jobs & Cornjobs
+==============================
+
+ReplicatSets
+=============
+	ReplicaSets is also one of the resource that help creating & managing multiple copies of application in the form of pod.
+
+Parts
+------
+1. Label selector: Determine what no. of pods are in the ReplicaSet scope.
+2. Replica Count: Specified the designed no. of pods that should be running.
+3. Pod template: ReplicaSet used to create new pod.
+
+Creating ReplicaSet
+====================
+>>> file: rs.yaml <<<
+----------------------------------------------------
+kind: ReplicaSet
+apiVersion: apps/v1
+metadata: 
+  name: myrs
+spec: 
+  replicas: 3
+  selector:
+    matchLabels:  
+      app: rsexample
+  template:
+    metadata: 
+      labels:
+        app: rsexample
+    spec:
+      containers:
+      - name: rscontainer
+        image: aamirpinger/helloworld:latest
+        ports:
+        - containerPort: 80
+
+----------------------------------------------------
+
+kubectl create -f rs.yaml
+
+==============================================================================================
+
+
+Listing Replicasets
+====================
+
+kubectl get replicaset OR rs
+
+kubectl get rs myrs -o yaml
+
+kubectl describe replicaset myrs
+
+kubectl get pod,replicaset 
+
+kubectl delete pod <pod_name: myrs-mm8z6>
+
+kubectl get pod,replicaset --show-labels
+
+kubectl label pod myrs-pb2v5 app=new --overwrite
+
+kubectl get pod,replicaset --show-labels
+
+
+==============================================================================================
+
+Deleting Pods and ReplicaSet
+=============================
+# Delete replicaset with all pods
+kubectl delete rs myrs
+
+kubectl get po,rs --show-labels
+
+# Delete replicaset without deleting its pods
+kubectl delete rs myrs --cascade=false
+==============================================================================================
+
+Operators in MatchExpressions
+==============================
+Use matchExpression instead of matchLabels
+
+* In, NotIn, Exist & DoesNotExist
+
+>>> file: rs.yaml <<<
+----------------------------------------------------
+kind: ReplicaSet
+apiVersion: apps/v1
+metadata: 
+  name: myrs
+spec: 
+  replicas: 3
+  selector:
+    matchExpressions:  
+    - key: app
+      operator: In
+      values:
+      - rsexample
+  template:
+    metadata: 
+      labels:
+        app: rsexample
+    spec:
+      containers:
+      - name: rscontainer
+        image: aamirpinger/helloworld:latest
+        ports:
+        - containerPort: 80
+
+----------------------------------------------------
+
+kubectl create -f rs.yaml
+
+kubectl get po,rs --show-labels
+
+==============================================================================================
+
+Creating ReplicaSets in runtime
+================================
+
+kubectl scale rs myrs --replicas=3
+
+kubectl get po,rs --show-label
+
+==============================================================================================
+
+Job Resource
+=============
+Used to create job which automatically terminates when job is done.
+
+
+==============================================================================================
+
+
+>>> file: jobResource.yaml <<<
+----------------------------------------------------
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: jobexample
+spec:
+  template: 
+    spec:
+      containers:
+      - name: jobcontainer
+        image: docker/whalesay
+        command: ["cowsay","This is an example of job resource"]
+      restartPolicy: Never
+  backoffLimit: 4
+  activeDeadlineSeconds: 60
+----------------------------------------------------
+
+kubectl get job
+
+kubectl get po
+
+kubectl logs jobexacmple-dfasf
+
+==============================================================================================
+
+Cornjob
+========
+
+Fimiliar with job resource but only difference is we can schedule it to run multiple time of span
+
+
+==============================================================================================
+
+Cornjob Echeduling Expression
+==============================
+
+
+>>> file: cj.yaml <<<
+----------------------------------------------------
+kind: CronJob
+apiVersion: batch/v1beta1
+metadata: 
+  name: cj
+spec:
+  schedule: "* * * * *"
+  jobTemplate: 
+    spec:
+      template:
+        metadata: 
+          labels: 
+            app: cjexample
+        spec:
+          containers:
+          - name: cjcontainer
+            image: docker/whalesay
+            command: ["cow","CronJob example"]
+          restartPolicy: Never
+
+----------------------------------------------------
+
+kubectl create -f cj.yaml
+
+kubectl get cj
+
+kubectl get cj,job,po
+
+kubectl logs cj-1589985240
+
+kubectl delete cj <name: cj>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+==============================================================================================

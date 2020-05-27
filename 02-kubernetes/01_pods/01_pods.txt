@@ -1,0 +1,287 @@
+Basic Commands
+===============
+
+# Start kubenetes
+minikube start 
+
+# Status
+minikube status
+
+# kubectl info
+kubectl cluster-info
+
+*********************************************************************************
+
+Nodes
+======
+
+# list of all worker & master nodes
+kubectl get nodes
+
+# Detail of specific node
+kubectl describe nodes minikube
+
+
+*********************************************************************************
+
+alias
+======
+
+# Shorten key
+alias key="kubectl get nodes"
+
+# Call alias 
+key
+
+
+*********************************************************************************
+
+About pod
+=========
+
+NOTE: 1. Kubenetes can only run containerized application, before run containerized application it wraps called pod(i.e; layer of machine upon 		 it)
+      2. Each pod has IP, hostname, processes, etc.
+      3. pod with multiple containers will always run on a same worker node.
+
+*********************************************************************************
+
+Creating pod
+=============
+>>> file: firstpod.yaml <<<
+----------------------------------------------
+apiVersion: v1
+metadata: 
+  name: firstpod
+spec:
+  containers:
+  - name: container1
+    image: aamirpinger/helloworld:latest
+    ports:
+    - containerPort: 80
+----------------------------------------------
+
+kubectl create -f firstpod.yaml
+
+*********************************************************************************
+
+Pod listing & Insights
+=======================
+
+# list pod(s)
+kubectl get pods
+
+# Detailed info of pod in yaml format
+kubectl get pods  firstpod -o yaml
+
+# Detailed info of pod in json format
+kubectl get pods  firstpod -o json
+
+
+*********************************************************************************
+
+Port Forwarding
+===============
+
+kubectl port-forward mysecondpod 6500:80
+
+Show in Browser -> http://localhost:6500/
+
+*********************************************************************************
+
+Creating pod from Commandline
+=============================
+
+kubectl run mysecondpod --image=aamirpinger/helloworld:latest --port=80 --restart=Never
+
+Confirmation -> kubectl get pods
+
+
+*********************************************************************************
+
+Group Resource: Label
+=====================
+
+	* Organize pods with label.
+	* labels are key/value to group resources.
+	* Label used to filer options by providing criteria.
+	* Multiple labels assigned to resources to make group with same label.
+
+
+
+
+*********************************************************************************
+
+Pod listing with Labels
+========================
+
+kubectl get pods --show-labels
+
+kubectl get pods -L env,type,run
+
+Specific label selector
+========================
+
+# Search label type=frontend
+kubectl get pods -l type=frontend
+kubectl get pods -l type=frontend --show-labels
+
+# Search label type != frontend
+kubectl get pods -l type!=frontend --show-labels
+
+# Search label my type != frontend & env= evelopment
+kubectl get pods -l type!=frontend,env=development --show-labels
+
+# Search pod(s) having label env
+kubectl get pods -l env --show-labels
+
+# Search pod(s) not having label env
+kubectl get pods -l '!env' --show-labels
+
+# Search pod(s) in list having label type
+kubectl get pods -l  'type in (frontend,backend)' --show-labels
+
+# Search pod(s) not in list having label type
+kubectl get pods -l  'type notin (frontend,backend)' --show-labels
+
+*********************************************************************************
+
+Labeling pod at runtime
+========================
+
+# set lable at runtime
+kubectl label pods firstpod app=helloworld type=frontend
+
+# Edit lable
+kubectl label pods firstpod app=helloworld type=frontend env=production --overwrite
+
+# Removing lable
+kubectl label pod firstpod env-  # env lable removed
+
+*********************************************************************************
+
+Labeling Selector with Node
+=============================
+
+>>> file: podwithnodeselector.yaml <<<
+----------------------------------------------
+kind: Pod 
+apiVersion: v1
+metadata:
+    name: podwithnodeselector
+spec:
+    nodeSelector: 
+        typeofharddisk: ssd
+    containers:
+    - name: container1
+      image: aamirpinger/flag:latest
+      ports:
+      - containerPort: 80
+
+----------------------------------------------
+
+# Note working because no ssd node label made
+kubectl create -f podwithnodeselector.yaml
+
+# Giving node label
+kubectl label node minikube typeofharddisk=ssd
+
+*********************************************************************************
+
+Annotation
+============
+Detailed explation i.e; writer, date, version, etc
+
+>>> file: podwithannotation.yaml <<<
+----------------------------------------------
+kind: Pod
+apiVersion: v1
+metadata:
+  name: podwithannotation
+  annotations:
+    createdBy: "Hamza Arain"
+    email: hamzaarain1999@gmail.com 
+spec:
+  containers:
+  - name: container-new
+    image: mhamzahanif/firs-app:latest
+    ports: 
+    - containerPort: 80
+
+
+----------------------------------------------
+
+*********************************************************************************
+
+Describing pod's insights
+==========================
+kubectl describe pod <name i.e; firstpod>
+
+*********************************************************************************
+
+Name space
+==================
+kubectl create namespace <name i.e; production>
+
+# Listing namespaces
+kubectl get namespaces
+
+Pod insight namespace
+======================
+
+>>> file: firstpod.yaml <<<
+----------------------------------------------
+kind: Pod
+apiVersion: v1
+metadata: 
+  name: firstpod
+  namespace: production
+spec:
+  containers:
+  - name: container1
+    image: aamirpinger/helloworld:latest
+    ports:
+    - containerPort: 80
+----------------------------------------------
+
+kubectl create -f firstpod.yaml
+
+kubectl get pod --namespace=production
+
+
+
+Through Command line
+---------------------
+kubectl run podname --image=aamirpinger/helloworld:latest --port=80 --restart=Never --namespace=development
+
+kubectl get pod -n development
+
+*********************************************************************************
+
+Delete Pods
+============
+
+# default namespance
+kubectl delete pod firstpod
+kubectl get pods --all-namespaces
+
+# By namespace
+kubectl delete ns development
+kubectl get ns
+
+# Delete pod by lable
+kubectl get pods --show-labels
+kubectl delete pod -l type=frontend
+kubectl get pods --show-labels
+
+# Delete all pods bydefault
+kubectl delete pod --all
+*********************************************************************************
+
+
+
+
+
+
+
+
+

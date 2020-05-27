@@ -1,0 +1,15 @@
+kind: Pod
+apiVersion: v1
+metadata: 
+  name: lp-exec
+spec:
+  containers:
+  - name: myapp
+    image: aamirpinger/hi
+    ports:
+    - containerPort: 80 
+    livenessProbe: 
+      exec:
+        command:
+        - cat
+        - /tmp/healthy 

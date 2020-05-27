@@ -1,0 +1,297 @@
+ConfigMap, Secret & Deploy
+===========================
+
+ConfigMap
+==========
+
+* ConfigMaps separate your application configuration from your application code, which help your containerized application portable.
+
+* ConfigMaps are useful for storing & sharing non-sensitive, unencrypted configuration info which you can change at runtime.
+
+* It help makes their config. easier to change & manage, & preversts hardcoding config. data to Pod specifications.
+
+=========================================================================
+
+ConfigMap from Literals
+========================
+
+kubectl create configmap first-configmap --from-literal=fname=Hamza --from-literal=lname=Arain
+
+kubectl get configmap OR cm
+
+kubectl describe configmap first-configmap
+
+=========================================================================
+
+ConfigMap from File
+====================
+
+>>> File: user.txt <<<
+--------------------------------------------
+fname=Hamza
+lname=Hanif
+
+--------------------------------------------
+
+
+kubectl create configmap firstfromfile --from-file=user.txt
+
+kubectl get cm
+
+kubectl describe configmap firstfromfile
+
+# To give key <bio>
+kubectl create configmap cmfromfile --from-file=bio=user.txt
+
+kubectl get cm cmfromfile -o yaml
+
+kubectl describe cm cmfromfile
+
+=========================================================================
+
+ConfigMap from env File
+========================
+
+>>> File: cm.env <<<
+--------------------------------------------
+CREATEDBY=Hamza
+
+--------------------------------------------
+
+kubectl create cm cmfrom-envfile --from-env-file=cm.env
+
+kubectl get cm
+
+kubectl describe cm cmfrom-envfile
+
+=========================================================================
+
+ConfigMap as Volume
+====================
+
+>>> File: podWithConfigMap.yaml <<<
+--------------------------------------------
+kind: Pod
+apiVersion: v1
+metadata:
+  name: pod-with-configmap-volume
+spec:
+  volumes:
+  - name: configmap-volume
+    configMap:
+      name: first-configmap
+  containers:
+  - name: container1
+    image: nginx
+    volumeMounts:
+    - name: configmap-volume
+      mountPath: /data/cm
+    imagePullPolicy: IfNotPresent
+
+--------------------------------------------
+
+kubectl create -f podWithConfigMap.yaml
+
+kubectl get po
+
+kubectl describe cm first-configmap
+
+kubectl exec pod-with-configmap-volume -c container1 -it sh
+
+------------------
+# cd data/cm
+# ls
+fname  lname
+# cat fname
+Hamza#     
+# exit
+------------------
+
+=========================================================================
+
+ConfigMap as env Variables
+===========================
+
+kubectl create -f podcmenv.yaml
+
+kubectl get po OR pod
+
+kubectl get cm OR configmap
+
+kubectl exec podcmenv -it sh
+
+--------------------------
+/src # env
+# exit
+---------------------------
+
+# Make service to use our appkication in browser.
+
+kubectl expose po podcmenv --port=8080 --target-port=8080 --type=LoadBalancer
+
+kubectl get service
+
+minikube ip
+
+=========================================================================
+
+Secret
+=======
+
+* Used to pass key/value data to application dynamically like configmap.
+
+* It secure that stores sensitive data like paaswords, OAuth tokens, SSH keys in your cluster.
+
+* This Secret values are Baesd64 in Kubernetes.
+
+=========================================================================
+
+Secret from File
+=================
+
+>>> File: keyval.txt <<<
+--------------------
+fname=mhamza
+lname=hanif
+--------------------
+
+kubectl create secret generic secretfrom-file --from-file=bio=keyval.txt
+
+kubectl get secret
+
+kubectl describe secret secretfrom-file
+
+=========================================================================
+
+Secret from env File
+=====================
+
+>>> File: keyval.txt <<<
+--------------------
+fname=mhamza
+lname=hanif
+--------------------
+
+kubectl create secret  generic secretfrom-envfile --from-env-file=keyval.txt
+
+kubectl get secret
+
+kubectl describe secret secretfrom-envfile
+
+=========================================================================
+
+Secret as Volume
+=================
+
+>>> File: podWithConfigMap.yaml <<<
+--------------------------------------------
+
+kind: Pod
+apiVersion: v1
+metadata: 
+  name: podwithsecvol
+spec:
+  volumes:
+  - name: secvol
+    secret:
+      secretName: firstsecret
+  containers:
+  - name: container1
+    image: nginx
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+    - name: secvol
+      mountPath: /secretdata
+
+--------------------------------------------
+kubectl create -f podsecret.yaml
+
+kubectl get po
+
+kubectl exec podwithsecvol -it sh
+
+------------------------------
+# cd secretdata
+# ls
+api  username
+# cat api
+test.db.aws.com# cat username
+aamirpinger# exit
+------------------------------
+
+=========================================================================
+
+Secret as env Variable
+=======================
+
+>>> File: secenv.yaml <<<
+--------------------------------------------
+kind: Pod
+apiVersion: v1
+metadata: 
+  name: secenv
+spec:
+  containers:
+  - name: container1
+    image: nginx
+    imagePullPolicy: IfNotPresent
+    envFrom:
+    - secretRef:
+        name: firstsecret
+--------------------------------------------
+
+kubectl create -f secenv.yaml
+
+kubectl get po
+
+kubectl exec secenv -it sh
+
+---------------------
+# env
+.
+.
+.
+username=aamirpinger
+api=test.db.aws.com
+---------------------
+
+=========================================================================
+
+Environment Variable
+=====================
+
+>>> File: secenv.yaml <<<
+--------------------------------------------
+kind: Pod
+apiVersion: v1
+metadata: 
+  name: secenv
+spec:
+  containers:
+  - name: container1
+    image: nginx
+    imagePullPolicy: IfNotPresent
+    envFrom:
+    - secretRef:
+        name: firstsecret
+
+--------------------------------------------
+
+kubectl create -f secenv.yaml
+
+kubectl get po
+
+kubectl exec secenv env
+
+=========================================================================
+
+Deploymwent
+============
+
+When updating image to make container inside pod the replicaset maintained old version of pods. Thus this will use replace old version of pod with new one.
+
+
+
+
+
+

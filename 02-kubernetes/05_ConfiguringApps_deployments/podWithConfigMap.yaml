@@ -1,0 +1,16 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: pod-with-configmap-volume
+spec:
+  volumes:
+  - name: configmap-volume
+    configMap:
+      name: first-configmap
+  containers:
+  - name: container1
+    image: nginx
+    volumeMounts:
+    - name: configmap-volume
+      mountPath: /data/cm
+    imagePullPolicy: IfNotPresent

@@ -1,0 +1,13 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: podwithannotation
+  annotations:
+    createdBy: "Hamza Arain"
+    email: hamzaarain1999@gmail.com 
+spec:
+  containers:
+  - name: container-new
+    image: mhamzahanif/firs-app:latest
+    ports: 
+    - containerPort: 80

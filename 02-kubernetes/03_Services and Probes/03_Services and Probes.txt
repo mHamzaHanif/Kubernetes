@@ -1,0 +1,122 @@
+Services and Probes
+====================
+
+Service
+========
+
+* In situation like port-forwarding it is not best option to use. Instead we create a resource called Service by kubernetes.
+
+* Evry pod has its own ip address but kubernetes can group under single static ip address.
+
+* Its IP addresss & port doesn't change.
+
+Types
+------
+1. Cluster IP(default):
+	* Exposes internal ip in the cluster.
+	* This makes the service only reachable from within the cluster.
+	* We can heck it by ssh & than clusterIP:port.
+
+2. Node Port:
+	* Exposes the service on the same port of each selected Node in the cluster.
+	* Port range is 30000 to 32787.
+	* Accessible from outsie the cluster using <NodeIP> <NodePort>.
+
+3. Load balancer: 
+	* creates an external load balancer from traffic by sending to different pods.
+	
+4. External name:
+	* Creating alias to shortn long url for internal use.
+
+
+=========================================================================
+
+loadBalancer Service
+=====================
+
+>>> File: mysvc.yaml <<<
+-------------------------------------------
+kind: Service
+apiVersion: v1
+metadata: 
+  name: my-service
+spec: 
+  ports:
+  - port: 8080
+    targetPort: 80
+  type: LoadBalancer 
+  selector:
+    app: rsexample
+    
+-------------------------------------------
+
+kubectl create -f mysvc.yaml
+
+kubectl get service OR svc
+
+minikube ip
+
+By terminal
+------------
+
+kubectl expose replicaset myrs --name=mysvc-lb --selector=app=rsexample --port=8000 --target-port=80 --type=LoadBalance
+
+=========================================================================
+
+Liveness Probe
+===============
+
+Probe=investigation of application health by interacting it with interval of time. If application doesn't respomd it will kill that pod & create new one.
+
+Methods:
+1. HTTP GET: 
+This send request on container's IP address, aport you specified. Prob considered as failure and automatically start when:
+	* PRob recieve error response code.
+	* Container app doesn't respond at all.
+
+2. TCP SOCKET:
+TCP Socket tries to open a TCP sonnection to the specified port of container. If probe is failure, container will restart.
+
+3. EXEC Prob:
+Execute some commands inside container & check status code if probe is not zero(0) the container will restart.
+ 
+>>> File: lp-exec.yaml <<<
+-------------------------------------------
+kind: Pod
+apiVersion: v1
+metadata: 
+  name: lp-exec
+spec:
+  containers:
+  - name: myapp
+    image: aamirpinger/hi:latest
+    ports:
+    - containerPort: 80 
+    livenessProbe: 
+      exec:
+        command:
+        - cat
+        - /tmp/healthy 
+
+-------------------------------------------
+
+kubectl create -f lp-exec.yaml
+
+kubectl get pod
+
+kubectl describe po lp-exec
+
+=========================================================================
+
+Readiness Probe
+================
+
+Only differecnce between liveness & readiness probe is that in readiness probe it will make failured pod not to give access to user instead divert to other copies of pod
+
+It has also same methods as liveness probe
+=========================================================================
+
+
+
+
+=========================================================================
